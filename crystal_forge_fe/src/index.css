@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-forge-900 antialiased;
+    font-feature-settings:
+      "cv02",
+      "cv03",
+      "cv04",
+      "cv11";
+  }
+  ::selection {
+    @apply bg-ember-200 text-forge-900;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-forge-800 text-white shadow-glow hover:bg-forge-700 focus:ring-forge-500 focus:ring-offset-white;
+  }
+  .btn-accent {
+    @apply btn bg-ember-500 text-forge-950 shadow-ember hover:bg-ember-400 focus:ring-ember-400 focus:ring-offset-white;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-forge-700 hover:bg-forge-50 focus:ring-forge-300 focus:ring-offset-white;
+  }
+  .btn-outline {
+    @apply btn border border-forge-200 bg-white text-forge-800 hover:border-forge-300 hover:bg-forge-50 focus:ring-forge-300 focus:ring-offset-white;
+  }
+
+  .input {
+    @apply block w-full rounded-xl border border-forge-200 bg-white px-3.5 py-2.5 text-sm text-forge-900 placeholder:text-forge-300 transition-colors focus:border-forge-500 focus:outline-none focus:ring-4 focus:ring-forge-100;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-forge-600;
+  }
+  .card {
+    @apply rounded-2xl border border-forge-100 bg-white p-6 shadow-sm;
+  }
+  .form-error {
+    @apply mt-1.5 text-xs font-medium text-red-600;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-forge-100 bg-white/70 px-3 py-1 text-xs font-medium text-forge-700 backdrop-blur;
+  }
+  .pill-ember {
+    @apply pill border-ember-200 bg-ember-50 text-ember-800;
+  }
+
+  .step-card {
+    @apply relative flex flex-col gap-3 rounded-2xl border border-forge-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-forge-200 hover:shadow-md;
+  }
+  .step-card-disabled {
+    @apply relative flex flex-col gap-3 rounded-2xl border border-forge-100 bg-white p-5 shadow-sm opacity-70 cursor-not-allowed;
+  }
+
+  .step-icon {
+    @apply flex h-10 w-10 items-center justify-center rounded-xl bg-forge-50 text-forge-700;
+  }
+  .step-icon-accent {
+    @apply step-icon bg-ember-50 text-ember-700;
+  }
+}
+
+@layer utilities {
+  @keyframes shimmer-bar {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
+  .animate-shimmer-bar {
+    animation: shimmer-bar 1.6s ease-in-out infinite;
+  }
+
+  @keyframes scan-vertical {
+    0% {
+      top: 0%;
+    }
+    100% {
+      top: 100%;
+    }
+  }
+  .animate-scan-vertical {
+    animation: scan-vertical 1.8s ease-in-out infinite alternate;
+  }
+
+  @keyframes fade-in-soft {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in-soft {
+    animation: fade-in-soft 350ms ease-out;
+  }
+}
