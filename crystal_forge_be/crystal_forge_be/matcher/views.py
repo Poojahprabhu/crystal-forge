@@ -11,7 +11,7 @@ from .models import JdAnalysis
 from .models import JdAnalysisBatch
 from .serializers import JdAnalysisBatchSerializer
 from .serializers import JdAnalysisCreateSerializer
-from .tasks import analyze_jd_task
+from .tasks import run_jd_analysis
 
 
 class JdAnalyzeView(APIView):
@@ -48,19 +48,15 @@ class JdAnalyzeView(APIView):
                     for text in serializer.validated_data["jds"]
                 ],
             )
-            # Dispatch only after the row is committed; ATOMIC_REQUESTS keeps
-            # the request transaction open until the view returns, so a bare
-            # .delay() here would race the worker against an unwritten row.
             analysis_ids = [a.id for a in analyses]
-            transaction.on_commit(
-                lambda ids=analysis_ids: [
-                    analyze_jd_task.delay(aid) for aid in ids
-                ],
-            )
 
+        for aid in analysis_ids:
+            run_jd_analysis(aid)
+
+        batch.refresh_from_db()
         return Response(
             JdAnalysisBatchSerializer(batch).data,
-            status=status.HTTP_202_ACCEPTED,
+            status=status.HTTP_200_OK,
         )
 
 

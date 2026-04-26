@@ -24,7 +24,7 @@ type Stage =
   | "error";
 
 const ACCEPT = ".pdf,.doc,.docx,application/pdf";
-const MAX_JDS = 20;
+const MAX_JDS = 2;
 const POLL_INTERVAL_MS = 2500;
 
 export default function ResumeAnalyzePage() {

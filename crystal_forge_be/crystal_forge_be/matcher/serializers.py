@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import JdAnalysis
 from .models import JdAnalysisBatch
 
-MAX_JDS_PER_BATCH = 20
+MAX_JDS_PER_BATCH = 2
 MAX_JD_LENGTH = 50_000
 
 

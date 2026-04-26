@@ -2,7 +2,6 @@ import datetime
 import logging
 
 from celery import shared_task
-from celery.exceptions import SoftTimeLimitExceeded
 from django.utils import timezone
 
 from crystal_forge_be.parser.models import ResumeProfile
@@ -12,12 +11,10 @@ from .models import JdAnalysis
 
 logger = logging.getLogger(__name__)
 
-# Soft limit must leave room for the task to mark itself FAILED before the
-# hard limit kills the worker process. analyze_jd is LLM + Tavily heavy.
-ANALYZE_HARD_LIMIT = 6 * 60
-ANALYZE_SOFT_LIMIT = ANALYZE_HARD_LIMIT - 30
 # Beat janitor cutoff: anything older than this in PENDING/RUNNING is dead.
-STUCK_AFTER_SECONDS = ANALYZE_HARD_LIMIT + 60
+# Sync execution shouldn't leave anything stuck, but a server crash mid-request
+# could; the janitor still runs as a safety net.
+STUCK_AFTER_SECONDS = 7 * 60
 
 
 def _mark_failed(analysis: JdAnalysis, message: str) -> None:
@@ -26,24 +23,15 @@ def _mark_failed(analysis: JdAnalysis, message: str) -> None:
     analysis.save(update_fields=["status", "error", "updated_at"])
 
 
-@shared_task(
-    name="matcher.analyze_jd",
-    bind=True,
-    acks_late=True,
-    reject_on_worker_lost=True,
-    soft_time_limit=ANALYZE_SOFT_LIMIT,
-    time_limit=ANALYZE_HARD_LIMIT,
-)
-def analyze_jd_task(self, analysis_id: int) -> None:
+def run_jd_analysis(analysis_id: int) -> None:
     try:
         analysis = JdAnalysis.objects.select_related(
             "batch__user__resume_profile",
         ).get(pk=analysis_id)
     except JdAnalysis.DoesNotExist:
-        logger.warning("analyze_jd_task: analysis %s missing; dropping", analysis_id)
+        logger.warning("run_jd_analysis: analysis %s missing; dropping", analysis_id)
         return
 
-    # Idempotent: a redelivered message after a successful run must not clobber.
     if analysis.status == JdAnalysis.Status.DONE:
         return
 
@@ -64,10 +52,6 @@ def analyze_jd_task(self, analysis_id: int) -> None:
             evidence=profile.evidence or [],
             qa=profile.qa or [],
         )
-    except SoftTimeLimitExceeded:
-        logger.warning("analyze_jd_task: %s exceeded soft time limit", analysis_id)
-        _mark_failed(analysis, "Analysis exceeded the time limit.")
-        return
     except Exception as exc:  # noqa: BLE001
         logger.exception("JD analysis %s failed", analysis_id)
         _mark_failed(analysis, str(exc) or exc.__class__.__name__)
@@ -100,10 +84,9 @@ def analyze_jd_task(self, analysis_id: int) -> None:
 
 @shared_task(name="matcher.requeue_stuck_jd_analyses")
 def requeue_stuck_jd_analyses() -> int:
-    """Mark analyses stuck in PENDING/RUNNING past the hard time-limit as FAILED.
+    """Mark analyses stuck in PENDING/RUNNING past the cutoff as FAILED.
 
-    Catches the rare case where a worker is SIGKILLed before its except
-    block runs (hard time-limit, OOM-killer, container eviction).
+    With sync execution this only catches server crashes mid-request.
     """
     cutoff = timezone.now() - datetime.timedelta(seconds=STUCK_AFTER_SECONDS)
     count = JdAnalysis.objects.filter(
@@ -111,7 +94,7 @@ def requeue_stuck_jd_analyses() -> int:
         updated_at__lt=cutoff,
     ).update(
         status=JdAnalysis.Status.FAILED,
-        error="Worker died or task exceeded the hard time limit.",
+        error="Server crashed mid-analysis or task exceeded the time limit.",
         updated_at=timezone.now(),
     )
     if count:
