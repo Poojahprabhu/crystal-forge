@@ -87,6 +87,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "crystal_forge_be.users",
+    "crystal_forge_be.parser",
+    "crystal_forge_be.matcher",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -361,5 +363,14 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
     "SCHEMA_PATH_PREFIX": "/api/",
 }
+# Mistral / LangChain
+# ------------------------------------------------------------------------------
+MISTRAL_API_KEY = env("MISTRAL_API_KEY", default="")
+MISTRAL_OCR_MODEL = env("MISTRAL_OCR_MODEL", default="mistral-ocr-latest")
+MISTRAL_CHAT_MODEL = env("MISTRAL_CHAT_MODEL", default="mistral-large-latest")
+
+# Tavily (used by matcher agent to find learning resources for missing skills)
+TAVILY_API_KEY = env("TAVILY_API_KEY", default="")
+
 # Your stuff...
 # ------------------------------------------------------------------------------

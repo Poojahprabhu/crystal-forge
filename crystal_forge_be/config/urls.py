@@ -40,6 +40,12 @@ if settings.DEBUG:
 urlpatterns += [
     # API base url
     path("api/", include("config.api_router")),
+    path("api/parser/", include("crystal_forge_be.parser.urls", namespace="parser")),
+    path("api/matcher/", include("crystal_forge_be.matcher.urls", namespace="matcher")),
+    path(
+        "api/profile/",
+        include("crystal_forge_be.users.api.profile_urls", namespace="profile"),
+    ),
     # DRF auth token
     path("api/auth-token/", obtain_auth_token, name="obtain_auth_token"),
     # Auth — registration + JWT login/refresh/verify
