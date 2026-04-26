@@ -13,6 +13,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 //   FormData     -> multipart/form-data; boundary=…
 export const apiClient = axios.create({
   baseURL,
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -35,7 +36,10 @@ async function refreshAccessToken(): Promise<string> {
   const response = await axios.post(
     `${baseURL}/api/auth/refresh/`,
     { refresh },
-    { headers: { "Content-Type": "application/json" } },
+    {
+      headers: { "Content-Type": "application/json" },
+      withCredentials: true,
+    },
   );
   const access = response.data.access as string;
   tokenStorage.setAccess(access);
